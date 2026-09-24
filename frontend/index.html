@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Intraday ML Desk</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%2311161d'/><path d='M5 22l7-8 5 5 10-11' stroke='%231fbf75' stroke-width='3' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/lightweight-charts@4.2.3/dist/lightweight-charts.standalone.production.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <svg viewBox="0 0 32 32" width="22" height="22" aria-hidden="true"><path d="M5 22l7-8 5 5 10-11" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span>Intraday ML Desk</span>
+      <span class="chip chip-mode" id="mode-chip">PAPER</span>
+    </div>
+    <div class="pills" id="pills">
+      <span class="pill" id="pill-market"><i></i><b>Market</b><em>–</em></span>
+      <span class="pill" id="pill-kite"><i></i><b>Kite</b><em>–</em></span>
+      <span class="pill" id="pill-reader"><i></i><b>Reader</b><em>–</em></span>
+      <span class="pill" id="pill-model"><i></i><b>Model</b><em>–</em></span>
+      <span class="pill" id="pill-ws"><i></i><b>Live</b><em>–</em></span>
+    </div>
+    <div class="actions">
+      <a class="btn btn-ghost" id="btn-login" href="/auth/login" hidden>Login to Kite</a>
+      <button class="btn btn-ghost" id="btn-scan" title="Run the watchlist scan now">Scan watchlist</button>
+      <button class="btn" id="btn-pause">Pause signals</button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <!-- Watchlist -->
+    <aside class="panel left">
+      <div class="panel-head">
+        <h2>Watchlist</h2>
+        <span class="muted small" id="wl-source"></span>
+      </div>
+      <div class="search">
+        <input id="symbol-search" list="symbol-list" placeholder="Open symbol…" autocomplete="off">
+        <datalist id="symbol-list"></datalist>
+      </div>
+      <div class="wl-market" id="wl-market"></div>
+      <ul class="wl" id="watchlist"></ul>
+    </aside>
+
+    <!-- Chart + tabs -->
+    <section class="center">
+      <div class="panel chart-panel">
+        <div class="chart-toolbar">
+          <div class="sym">
+            <h1 id="chart-symbol">–</h1>
+            <span class="ltp mono" id="chart-ltp"></span>
+            <span class="chg mono" id="chart-chg"></span>
+          </div>
+          <div class="seg" id="tf-seg">
+            <button data-tf="1">1m</button>
+            <button data-tf="5" class="on">5m</button>
+            <button data-tf="15">15m</button>
+          </div>
+          <div class="seg" id="days-seg">
+            <button data-days="1">1D</button>
+            <button data-days="3" class="on">3D</button>
+            <button data-days="10">10D</button>
+          </div>
+          <label class="toggle"><input type="checkbox" id="vwap-toggle" checked> VWAP</label>
+          <div class="legend mono" id="legend"></div>
+        </div>
+        <div id="chart" class="chart"></div>
+      </div>
+
+      <div class="panel tabs-panel">
+        <nav class="tabs" id="tabs">
+          <button data-tab="trades" class="on">Paper trades</button>
+          <button data-tab="pnl">P&amp;L</button>
+          <button data-tab="setups">Setups</button>
+          <button data-tab="model">Model</button>
+        </nav>
+        <div class="tab-body">
+          <div class="tab on" id="tab-trades">
+            <div class="table-wrap"><table class="grid" id="trades-table">
+              <thead><tr><th>Signal</th><th>Symbol</th><th>Side</th><th class="r">Qty</th><th class="r">Entry</th><th class="r">SL</th><th class="r">Target</th><th class="r">Exit</th><th>Reason</th><th class="r">Net ₹</th><th class="r">R</th><th>Status</th><th></th></tr></thead>
+              <tbody></tbody>
+            </table></div>
+            <p class="empty" id="trades-empty" hidden>No paper trades yet. Signals that pass the model and the risk rules become paper trades.</p>
+          </div>
+
+          <div class="tab" id="tab-pnl">
+            <div class="kpis" id="pnl-kpis"></div>
+            <div class="split">
+              <div class="mini-chart" id="pnl-chart"></div>
+              <div class="table-wrap"><table class="grid" id="pnl-table">
+                <thead><tr><th>Day</th><th class="r">Trades</th><th class="r">Wins</th><th class="r">Losses</th><th class="r">Costs</th><th class="r">Net ₹</th><th class="r">Cumulative</th></tr></thead>
+                <tbody></tbody>
+              </table></div>
+            </div>
+          </div>
+
+          <div class="tab" id="tab-setups">
+            <p class="muted small">Every setup bar the engine evaluated (most recent first). Setups under the threshold are ignored; those above become signals unless a risk rule blocks them.</p>
+            <div class="table-wrap"><table class="grid" id="setups-table">
+              <thead><tr><th>Time</th><th>Symbol</th><th>Side</th><th class="r">Prob</th><th class="r">Thr</th><th class="r">Close</th><th class="r">ATR</th><th class="r">Vol ×</th><th class="r">VWAP dist</th><th>Result</th></tr></thead>
+              <tbody></tbody>
+            </table></div>
+          </div>
+
+          <div class="tab" id="tab-model">
+            <div class="model-head">
+              <div id="model-meta" class="muted small"></div>
+              <div class="actions">
+                <button class="btn btn-ghost" id="btn-reload">Reload model</button>
+                <button class="btn" id="btn-train">Retrain now</button>
+              </div>
+            </div>
+            <div id="model-warnings"></div>
+            <div class="kpis" id="model-kpis"></div>
+            <div class="split">
+              <div>
+                <h3>Out-of-sample equity <span class="muted small">— <span class="dot dot-blue"></span>model @ threshold <span class="dot dot-gray"></span>base rule</span></h3>
+                <div class="mini-chart" id="model-chart"></div>
+              </div>
+              <div>
+                <h3>Threshold sweep <span class="muted small">(walk-forward, after costs)</span></h3>
+                <div class="table-wrap"><table class="grid" id="sweep-table">
+                  <thead><tr><th class="r">Thr</th><th class="r">Cand.</th><th class="r">/window</th><th class="r">Precision</th><th class="r">Trades</th><th class="r">Net ₹</th><th class="r">Max DD</th></tr></thead>
+                  <tbody></tbody>
+                </table></div>
+              </div>
+            </div>
+            <div class="split">
+              <div>
+                <h3>Walk-forward windows</h3>
+                <div class="table-wrap"><table class="grid" id="windows-table">
+                  <thead><tr><th>Test period</th><th class="r">Setups</th><th class="r">Base</th><th class="r">AUC</th><th class="r">Cand.</th><th class="r">Precision</th><th class="r">Net ₹</th></tr></thead>
+                  <tbody></tbody>
+                </table></div>
+              </div>
+              <div>
+                <h3>Feature importance</h3>
+                <div id="importance" class="bars"></div>
+              </div>
+            </div>
+            <details class="train-log"><summary>Training log</summary><pre id="train-log" class="mono"></pre></details>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Today + signals -->
+    <aside class="panel right">
+      <div class="panel-head"><h2>Today</h2><span class="muted small" id="today-day"></span></div>
+      <div class="today" id="today"></div>
+      <div class="panel-head"><h2>Signals</h2><span class="muted small" id="sig-count"></span></div>
+      <ul class="signals" id="signals"></ul>
+      <p class="empty" id="signals-empty">No signals yet today.</p>
+    </aside>
+  </main>
+
+  <div class="toasts" id="toasts" aria-live="polite"></div>
+
+  <dialog id="sig-dialog">
+    <form method="dialog" class="dialog-body">
+      <header><h3 id="sig-dialog-title"></h3><button class="btn btn-ghost" value="close">Close</button></header>
+      <div id="sig-dialog-content"></div>
+    </form>
+  </dialog>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

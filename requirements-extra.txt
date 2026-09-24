@@ -1,0 +1,4 @@
+# Optional extras
+optuna>=3.6            # hyper-parameter tuning: python -m ml.train --tune 40
+psycopg[binary]>=3.1   # PostgreSQL / TimescaleDB instead of SQLite
+sentry-sdk>=2.0        # error reporting (set SENTRY_DSN)

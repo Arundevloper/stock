@@ -1,0 +1,50 @@
+# docker compose up -d --build
+# One-off commands:  docker compose exec backend python -m backfill.historical --days 180
+#                    docker compose exec backend python -m ml.train
+services:
+  backend:
+    build: .
+    env_file: .env
+    environment:
+      BACKEND_URL: http://backend:8000
+    volumes:
+      - ./data:/app/data
+      - ./models:/app/models
+      - ./config:/app/config
+    ports:
+      - "127.0.0.1:8000:8000"   # put nginx (deploy/nginx.conf) in front for HTTPS
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  reader:
+    build: .
+    command: ["python", "-m", "reader.kite_reader"]
+    env_file: .env
+    environment:
+      BACKEND_URL: http://backend:8000
+    volumes:
+      - ./data:/app/data        # access_token.json + instrument list
+      - ./config:/app/config
+    depends_on:
+      - backend
+    restart: always             # the reader exits on token change/expiry and is restarted here
+
+  # Optional PostgreSQL + TimescaleDB:  docker compose --profile postgres up -d
+  # then set DATABASE_URL=postgresql+psycopg://trader:trader@db:5432/trading and pip install psycopg[binary]
+  db:
+    image: timescale/timescaledb:latest-pg16
+    profiles: ["postgres"]
+    environment:
+      POSTGRES_USER: trader
+      POSTGRES_PASSWORD: trader
+      POSTGRES_DB: trading
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  pgdata:

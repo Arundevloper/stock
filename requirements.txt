@@ -1,0 +1,20 @@
+# --- web / backend ---
+fastapi>=0.115
+uvicorn[standard]>=0.30
+sqlalchemy>=2.0
+pydantic-settings>=2.3
+httpx>=0.27
+apscheduler>=3.10,<4
+
+# --- data / ML ---
+numpy>=1.26
+pandas>=2.2
+scikit-learn>=1.5
+xgboost>=2.1
+joblib>=1.4
+
+# --- Zerodha ---
+kiteconnect>=5.0
+
+# --- dev ---
+pytest>=8

@@ -1,0 +1,16 @@
+# /etc/systemd/system/intraday-reader.service
+# The reader exits when the daily access token changes/expires; Restart=always brings it back.
+[Unit]
+Description=Intraday ML Kite reader
+After=intraday-backend.service
+
+[Service]
+User=trader
+WorkingDirectory=/opt/stock-app
+ExecStart=/opt/stock-app/.venv/bin/python -m reader.kite_reader
+Restart=always
+RestartSec=10
+Environment=TZ=Asia/Kolkata
+
+[Install]
+WantedBy=multi-user.target

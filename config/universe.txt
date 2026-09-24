@@ -1,0 +1,43 @@
+# Trading universe: liquid NSE F&O stocks. One tradingsymbol per line (NSE: prefix optional).
+# The reader streams all of these + NIFTY 50; the 9:31 scan picks the day's watchlist from them.
+# Unknown symbols are skipped with a warning - check names against the Kite instrument list.
+RELIANCE
+HDFCBANK
+ICICIBANK
+INFY
+TCS
+SBIN
+AXISBANK
+KOTAKBANK
+LT
+ITC
+BHARTIARTL
+HINDUNILVR
+BAJFINANCE
+MARUTI
+M&M
+TATASTEEL
+SUNPHARMA
+HCLTECH
+WIPRO
+TECHM
+ADANIENT
+ADANIPORTS
+ASIANPAINT
+TITAN
+ULTRACEMCO
+NTPC
+POWERGRID
+ONGC
+COALINDIA
+JSWSTEEL
+HINDALCO
+INDUSINDBK
+BAJAJFINSV
+DRREDDY
+CIPLA
+TRENT
+BEL
+HAL
+DLF
+VEDL

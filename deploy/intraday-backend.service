@@ -1,0 +1,15 @@
+# /etc/systemd/system/intraday-backend.service   (alternative to docker compose)
+[Unit]
+Description=Intraday ML backend (FastAPI)
+After=network-online.target
+
+[Service]
+User=trader
+WorkingDirectory=/opt/stock-app
+ExecStart=/opt/stock-app/.venv/bin/uvicorn backend.main:app --host 127.0.0.1 --port 8000 --workers 1
+Restart=always
+RestartSec=5
+Environment=TZ=Asia/Kolkata
+
+[Install]
+WantedBy=multi-user.target
