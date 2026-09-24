@@ -67,7 +67,9 @@ def _session_token() -> str:
     return hmac.new(key, b"intraday-session", hashlib.sha256).hexdigest()
 
 
-OPEN_PATHS = ("/health", "/api/ingest/")
+# /auth/callback must be open: Zerodha's redirect arrives before the browser has our session cookie,
+# and a request_token is single-use and short-lived, so a password prompt there can lose it.
+OPEN_PATHS = ("/health", "/api/ingest/", "/auth/callback")
 
 
 @app.middleware("http")
